@@ -182,8 +182,8 @@ PODS:
     - React-cxxreact (= 0.62.0)
     - React-jsi (= 0.62.0)
   - React-jsinspector (0.62.0)
-  - react-native-webrtc (1.84.0):
-    - React
+  - react-native-webrtc (1.100.1):
+    - React-Core
   - React-RCTActionSheet (0.62.0):
     - React-Core/RCTActionSheetHeaders (= 0.62.0)
   - React-RCTAnimation (0.62.0):
@@ -350,7 +350,7 @@ SPEC CHECKSUMS:
   React-jsi: bc8166d6833cdcb0848c80710b26ce63fad2c099
   React-jsiexecutor: 8bf0b2707f05865113415088c398a7f98c0cf546
   React-jsinspector: 8e5913c4c6c54f0d3f9c9fc630c465a89cded65d
-  react-native-webrtc: 9268ae9a2bc9730796b0968d012327e92c392adf
+  react-native-webrtc: 206a0ac12a5633d2ec4605174d7c9f12f0d674b2
   React-RCTActionSheet: 674afbc8b9c76e0a83520e0a51da29a70802c03f
   React-RCTAnimation: f5f24330d09ee677fb49e0782f8321868f4df431
   React-RCTBlob: b773ce6138ab0d172ebd8a455fd4efd200a92549
@@ -363,6 +363,6 @@ SPEC CHECKSUMS:
   ReactCommon: d22162ab8f1358c53dfcd0f9c4d82d38facdbc48
   Yoga: 9db9ff2025ad21d1ac0a8b3c85d5ac4e7c29d525
 
-PODFILE CHECKSUM: 90ace075f6f469dda78025f7b0d175a77c0a1fa1
+PODFILE CHECKSUM: 8ae010256ccd465433e051fc6b6d2e7fc475650f
 
 COCOAPODS: 1.11.3

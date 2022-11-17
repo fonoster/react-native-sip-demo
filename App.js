@@ -6,7 +6,7 @@
  * @flow strict-local
  */
 
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -23,56 +23,80 @@ import {registerGlobals} from 'react-native-webrtc';
 
 registerGlobals();
 
-import JsSIP from 'react-native-jssip';
+import * as JsSIP from 'react-native-jssip';
 
 const App: () => React$Node = () => {
-  const [status, setStatusState] = useState('00: NO CALLS');
+  const [status, setStatusState] = useState('00: NOTHING');
+  const [isLoading, setIsLoading] = useState(true);
+  const ua = useRef(null);
 
-  const setStatus = useCallback(s => {
-    console.warn(s);
-    setStatusState(s);
-  }, []);
-
-  const onCall = useCallback(() => {
+  useEffect(() => {
     const sockets = [
       new JsSIP.WebSocketInterface('wss://sipstaging.camanio.com:5063'),
     ];
 
-    const ua = new JsSIP.UA({
+    ua.current = new JsSIP.UA({
       sockets,
       uri: 'sip:1001@sipstaging.camanio.com',
       password: '1234',
       display_name: 'Fonoster Test',
+      register: true,
+      register_expires: 60,
     });
 
-    ua.start();
+    ua.current.start();
+    ua.current.on('registered', e => setIsLoading(false));
+  }, []);
+
+  const setStatus = useCallback(st => {
+    setStatusState(st);
+
+    console.log(`STATUS: ${st}`);
+  }, []);
+
+  const onCall = useCallback(() => {
+    if (!ua.current) {
+      setStatus('01: ERROR: UA NOT READY');
+
+      return;
+    }
+
+    let start = new Date().getTime();
 
     const eventHandlers = {
       progress: function(e) {
-        setStatus('00: CALL IS IN PROGRESS');
+        setStatus('04: RINGING, THE CALL IS IN PROGRESS...');
+
+        const end = new Date().getTime();
+
+        const time = (end - start) / 1000;
+
+        console.log(`STATUS: THE CALL TAKE ${time} SECONDS TO RING`);
       },
       failed: function(e) {
-        console.warn('00: CALL FAILED WITH CAUSE: ', e);
-      },
-      ended: function(e) {
-        console.warn('00: CALL ENDED WITH CAUSE: ' + e);
-      },
-      confirmed: function(e) {
-        setStatus('00: CALL CONFIRMED');
-      },
-      connecting: function(e) {
-        setStatus('00: CONNECTING...');
-      },
-      sending: function(e) {
-        setStatus('00: SENDING...');
+        ua.current.stop();
 
-        if (e.request) {
-          console.warn(e.request);
+        setStatus('05: CALL FAILED, GO TO CONSOLE FOR MORE INFO');
+
+        if (e && e.cause) {
+          console.warn(e.cause);
         }
       },
-      accepted: () => console.warn('00: CALL ACCEPTED'),
-      peerconnection: e => console.warn('00: PEER CONNECTION', e),
-      icecandidate: e => console.warn('00: ICE CANDIDATE', e),
+      ended: function(e) {
+        const message =
+          e.cause === 'Terminated' && e.originator === 'local'
+            ? '06: CALL ENDED, CALL WAS NOT CLOSED ON THE DEVICE'
+            : '06: CALL ENDED, CALL WINDOW SUCCESSFULLY CLOSED ON THE DEVICE';
+
+        setStatus(message);
+      },
+      confirmed: function(e) {
+        setStatus('07: CALL CONFIRMED, CALL IS ESTABLISHED');
+      },
+      sending: function(e) {
+        setStatus('08: SENDING CALL REQUEST TO SIP SERVER...');
+      },
+      accepted: () => setStatus('09: CALL ACCEPTED, CALL IS ESTABLISHED'),
     };
 
     const options = {
@@ -80,7 +104,9 @@ const App: () => React$Node = () => {
       mediaConstraints: {audio: true, video: false},
     };
 
-    const session = ua.call('sip:17853178070@sipstaging.camanio.com', options);
+    ua.current.call('sip:17853178070@sipstaging.camanio.com', options);
+
+    setStatus('11: CALLING TO SIP SERVER...');
   }, [setStatus]);
 
   return (
@@ -90,15 +116,25 @@ const App: () => React$Node = () => {
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
           style={styles.scrollView}>
-          <View>
-            <Text style={styles.footer}>{status}</Text>
-          </View>
-
-          <TouchableOpacity onPress={onCall}>
-            <View>
-              <Text style={styles.button}>Call</Text>
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loading}>Loading</Text>
+              <Text style={styles.loading}>
+                Connecting to SIP server, please wait...
+              </Text>
             </View>
-          </TouchableOpacity>
+          ) : (
+            <>
+              <View>
+                <Text style={styles.footer}>{status}</Text>
+              </View>
+              <TouchableOpacity onPress={onCall}>
+                <View>
+                  <Text style={styles.button}>Call</Text>
+                </View>
+              </TouchableOpacity>
+            </>
+          )}
         </ScrollView>
       </SafeAreaView>
     </>
@@ -124,6 +160,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     textAlign: 'center',
     marginTop: 16,
+  },
+  loading: {
+    color: Colors.dark,
+    fontSize: 22,
+    fontWeight: '600',
+    padding: 24,
+    alignItems: 'center',
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
   },
 });
 

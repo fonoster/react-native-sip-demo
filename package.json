@@ -13,7 +13,7 @@
     "react": "16.11.0",
     "react-native": "0.62.0",
     "react-native-jssip": "^3.7.6",
-    "react-native-webrtc": "1.84.0"
+    "react-native-webrtc": "1.100.1"
   },
   "devDependencies": {
     "@babel/core": "^7.6.2",
